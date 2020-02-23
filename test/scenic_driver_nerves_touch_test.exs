@@ -1,8 +1,8 @@
-defmodule ScenicDriverNervesTouchTest do
+defmodule ScenicDriverNervesWaveshareTouchTest do
   use ExUnit.Case
-  doctest ScenicDriverNervesTouch
+  doctest ScenicDriverNervesWaveshareTouch
 
   test "greets the world" do
-    assert ScenicDriverNervesTouch.hello() == :world
+    assert ScenicDriverNervesWaveshareTouch.hello() == :world
   end
 end

@@ -1,7 +1,7 @@
 defmodule ScenicDriverNervesTouch.MixProject do
   use Mix.Project
 
-  @app_name :scenic_driver_nerves_touch
+  @app_name :scenic_driver_nerves_waveshare_touch
   @version "0.10.0"
   @github "https://github.com/boydm/scenic_driver_nerves_rpi"
 
@@ -35,7 +35,7 @@ defmodule ScenicDriverNervesTouch.MixProject do
 
   defp description() do
     """
-    Scenic.Driver.Nerves.Touch - Scenic driver providing touch input for Nerves devices.
+    Scenic.Driver.Nerves.WaveshareTouch - Scenic driver providing touch input for Nerves devices.
     """
   end
 
