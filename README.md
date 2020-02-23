@@ -1,4 +1,4 @@
-# scenic_driver_nerves_touch
+# Scenic Driver for WaveShare Touchscreens
 
 The main driver for receiving touch input on Nerves devices.
 
@@ -14,7 +14,7 @@ same cursor oriented events that come from glfw with a mouse.
 In your Nerves applications dependencies include the following line
 
     ...
-    {:scenic_driver_nerves_touch, , "~> 0.9"}
+    {:scenic_driver_nerves_waveshare_touch, , "~> 0.1"}
     ...
 
 You do not need to include it in the "host" mix target deps. There you should be
@@ -33,9 +33,9 @@ to the driver list in your ViewPort's config.exs file.
               module: Scenic.Driver.Nerves.Rpi,
             },
             %{
-              module: Scenic.Driver.Nerves.Touch,
+              module: Scenic.Driver.Nerves.WaveshareTouch,
               opts: [
-                device: "FT5406 memory based driver",
+                device: "WaveShare WaveShare Touchscreen",
                 calibration: {{1,0,0},{0,1,0}}
               ],
             }
@@ -44,7 +44,7 @@ to the driver list in your ViewPort's config.exs file.
 
 ## Device Name
 
-__This is important__
+**This is important**
 
 You need to supply the name of the OS driver you are getting the touch information from.
 You don't need to supply the entire string, but what you supply must be in the

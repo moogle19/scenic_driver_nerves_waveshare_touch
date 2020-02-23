@@ -43,13 +43,8 @@ defmodule Scenic.Driver.Nerves.WaveshareTouch do
               %{
                 module: Scenic.Driver.Nerves.WaveshareTouch,
                 opts: [
-<<<<<<< HEAD:lib/scenic_driver_nerves_waveshare_touch.ex
                   device: "WaveShare WaveShare Touchscreen",
                   calibration: {{1,0,0},{1,0,0}}
-=======
-                  device: "FT5406 memory based driver",
-                  calibration: {{1,0,0},{0,1,0}},
->>>>>>> master:lib/scenic_driver_nerves_touch.ex
                 ],
               }
             ]

@@ -2,8 +2,8 @@ defmodule ScenicDriverNervesTouch.MixProject do
   use Mix.Project
 
   @app_name :scenic_driver_nerves_waveshare_touch
-  @version "0.10.0"
-  @github "https://github.com/boydm/scenic_driver_nerves_rpi"
+  @version "0.1.0"
+  @github "https://github.com/moogle19/scenic_driver_nerves_waveshare_touch"
 
   def project do
     [
@@ -35,15 +35,16 @@ defmodule ScenicDriverNervesTouch.MixProject do
 
   defp description() do
     """
-    Scenic.Driver.Nerves.WaveshareTouch - Scenic driver providing touch input for Nerves devices.
+    Scenic.Driver.Nerves.WaveshareTouch - Scenic driver providing touch input from WaveShare displays for Nerves devices.
+    This project is base on the Scenic Touch Driver written by Boyd Multerer with so adjustments to work with the 7 inch WaveShare Display (Rev. C)
     """
   end
 
   defp package do
     [
       name: @app_name,
-      contributors: ["Boyd Multerer"],
-      maintainers: ["Boyd Multerer"],
+      contributors: ["Boyd Multerer", "Kevin Seidel"],
+      maintainers: ["Kevin Seidel"],
       licenses: ["Apache 2"],
       links: %{Github: @github}
     ]
