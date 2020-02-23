@@ -31,3 +31,6 @@ scenic_driver_nerves_touch-*.tar
 
 # ignore office temp files
 ~*.xlsx
+
+# Ignore Elixir Language Servers temp directory
+.elixir_ls
