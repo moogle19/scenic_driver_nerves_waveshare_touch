@@ -20,7 +20,7 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-scenic_driver_nerves_touch-*.tar
+scenic_driver_nerves_waveshare_touch-*.tar
 
 .DS_Store
 

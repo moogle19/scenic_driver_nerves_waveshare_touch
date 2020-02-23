@@ -1,4 +1,4 @@
-defmodule ScenicDriverNervesTouch.MixProject do
+defmodule ScenicDriverNervesWaveshareTouch.MixProject do
   use Mix.Project
 
   @app_name :scenic_driver_nerves_waveshare_touch

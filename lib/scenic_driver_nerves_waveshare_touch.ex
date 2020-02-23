@@ -176,6 +176,8 @@ defmodule Scenic.Driver.Nerves.WaveshareTouch do
       slot: 0,
       touch: false,
       fingers: %{},
+      # TODO: REMOVE
+      finger_count: 0,
       mouse_x: nil,
       mouse_y: nil,
       mouse_event: nil,
@@ -298,35 +300,71 @@ defmodule Scenic.Driver.Nerves.WaveshareTouch do
 
   # Ignore single abs misc events
   def handle_info(
-        {:input_event, source, [{:ev_abs, :abs_misc}] = events},
+        {:input_event, source, [{:ev_abs, :abs_misc, _}] = events},
         %{event_path: event_path} = state
       )
       when source == event_path do
-    Logger.debug("Ignoring single: #{inspect(events)}")
     {:noreply, state}
   end
 
-  # Ignore multitouch events
+  # Multitouch event
   def handle_info(
-        {:input_event, source, [{:ev_abs, :abs_misc, _} | _] = events},
+        {:input_event, source, [{:ev_abs, :abs_misc, finger_number} | _] = events},
         %{event_path: event_path} = state
       )
       when source == event_path do
-    Logger.debug("Ignoring multi: #{inspect(events)}")
-    {:noreply, state}
+    # Logger.debug("Finger #{inspect(finger_number + 1)}: #{inspect(events)}")
+    if finger_number + 1 > state.finger_count do
+      Logger.debug("Fingers: #{state.finger_count + 1}")
+      {:noreply, %{state | finger_count: state.finger_count + 1}}
+    else
+      {:noreply, state}
+    end
   end
 
-  # first handling for the input events we care about
+  # Touch start/end events
+  def handle_info(
+        {:input_event, source, [{:ev_msc, :msc_scan, _} | _] = events},
+        %{event_path: event_path} = state
+      )
+      when source == event_path do
+    if(Enum.member?(events, {:ev_key, :btn_touch, 0})) do
+      if Enum.any?(events, fn {class, type, value} ->
+           class == :ev_abs && type == :abs_misc && value < 5
+         end) do
+        # Logger.debug("Finger removed event: #{inspect(events)}")
+        Logger.debug("Fingers: #{state.finger_count - 1}")
+        {:noreply, %{state | finger_count: state.finger_count - 1}}
+      else
+        # Logger.debug("Touch UP event: #{inspect(events)}")
+        Logger.debug("Fingers: #{state.finger_count - 1}")
+        {:noreply, %{state | finger_count: state.finger_count - 1}}
+      end
+    else
+      if Enum.any?(events, fn {class, type, value} ->
+           class == :ev_abs && type == :abs_misc && value < 5
+         end) do
+        # Logger.debug("Touch DOWN AFTER UP event: #{inspect(events)}")
+        {:noreply, state}
+      else
+        # Logger.debug("Touch DOWN event: #{inspect(events)}")
+        Logger.debug("Fingers: 1")
+        {:noreply, %{state | finger_count: 1}}
+      end
+    end
+  end
+
+  # Single finger events
   def handle_info({:input_event, source, events}, %{event_path: event_path} = state)
       when source == event_path do
-    Logger.info(inspect(inspect(events)))
+    # Logger.info(inspect(inspect(events)))
+    # Logger.debug("Finger 1: #{inspect(events)}")
 
     if [{:ev_abs, :abs_misc, value}] =
          Enum.reverse(events)
          |> Enum.take(1) do
       if value <= 5 do
-        Logger.info("IS 2nd FINGER")
-        Logger.debug(inspect(events))
+        # Logger.debug("Multitouch event (2): #{inspect(events)}")
         {:noreply, state}
       else
         state =
