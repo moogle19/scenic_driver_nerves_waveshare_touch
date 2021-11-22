@@ -27,7 +27,7 @@ defmodule ScenicDriverNervesTouch.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:input_event, "~> 0.4"},
+      {:input_event, "~> 1.0"},
       {:scenic, "~> 0.10"},
       {:ex_doc, "~> 0.19", only: [:dev, :test], runtime: false}
     ]

@@ -296,58 +296,25 @@ defmodule Scenic.Driver.Nerves.WaveshareTouch do
 
   # --------------------------------------------------------
 
-  # Ignore single abs misc events
-  def handle_info(
-        {:input_event, source, [{:ev_abs, :abs_misc}] = events},
-        %{event_path: event_path} = state
-      )
-      when source == event_path do
-    Logger.debug("Ignoring single: #{inspect(events)}")
-    {:noreply, state}
-  end
-
-  # Ignore multitouch events
-  def handle_info(
-        {:input_event, source, [{:ev_abs, :abs_misc, _} | _] = events},
-        %{event_path: event_path} = state
-      )
-      when source == event_path do
-    Logger.debug("Ignoring multi: #{inspect(events)}")
-    {:noreply, state}
-  end
-
-  # first handling for the input events we care about
   def handle_info({:input_event, source, events}, %{event_path: event_path} = state)
       when source == event_path do
-    Logger.info(inspect(inspect(events)))
-
-    if [{:ev_abs, :abs_misc, value}] =
-         Enum.reverse(events)
-         |> Enum.take(1) do
-      if value <= 5 do
-        Logger.info("IS 2nd FINGER")
-        Logger.debug(inspect(events))
-        {:noreply, state}
-      else
+    state = put_slot(events, state)
+    state =
+      if Enum.member?(events, {:ev_key, :btn_touch, 0}) do
+        fingers = Map.delete(state.fingers, state.slot)
         state =
-          Enum.reduce(events, state, fn ev, s ->
-            ev_abs(ev, s)
-            |> simulate_mouse(ev)
-          end)
+          %{state | touch: false, fingers: fingers}
+          |> simulate_mouse({:ev_key, :btn_touch, 0})
           |> send_mouse()
-
-        {:noreply, state}
-      end
-    else
-      state =
+      else
         Enum.reduce(events, state, fn ev, s ->
           ev_abs(ev, s)
           |> simulate_mouse(ev)
         end)
         |> send_mouse()
+      end
 
-      {:noreply, state}
-    end
+    {:noreply, state}
   end
 
   # --------------------------------------------------------
@@ -358,85 +325,81 @@ defmodule Scenic.Driver.Nerves.WaveshareTouch do
   end
 
   # ============================================================================
-  defp ev_abs(event, state)
-
-  # Event identifier
-  defp ev_abs({:ev_msc, :msc_scan, id}, state) do
-    fingers =
-      state.fingers
-      |> Map.put(id, %{id: id})
-
-    state
-    |> Map.put(:fingers, fingers)
-    |> Map.put(:slot, id)
+  # Extract slot from event list
+  defp put_slot([], state) do
+    fingers = state.fingers |> Map.put(0, %{id: 0})
+    %{state | slot: 0, fingers: fingers}
   end
 
-  # x Position changed
+  defp put_slot([{:ev_abs, :abs_misc, slot} | _rest], state) do
+    fingers = state.fingers |> Map.put(slot, %{id: slot})
+    %{state | slot: slot, fingers: fingers}
+  end
+
+  defp put_slot([h | t], state), do: put_slot(t, state)
+
+  defp ev_abs(event, state)
+  # set the x position
   defp ev_abs(
          {:ev_abs, :abs_x, x},
          %{
            fingers: fingers,
            slot: slot
          } = state
-       )
-       when length(fingers) > 0 do
+       ) do
+    # fingers = Map.update(fingers, slot, %{id: 0}, fn map -> Map.put(map, :x, x) end)
     fingers = put_in(fingers, [slot, :x], x)
     %{state | fingers: fingers}
   end
 
-  # x Position changed
   defp ev_abs(
          {:ev_abs, :abs_y, y},
          %{
            fingers: fingers,
            slot: slot
          } = state
-       )
-       when length(fingers) > 0 do
+       ) do
+    # fingers = Map.update(fingers, slot, %{id: 0}, fn map -> Map.put(map, :y, y) end)
     fingers = put_in(fingers, [slot, :y], y)
     %{state | fingers: fingers}
   end
 
-  # defp ev_abs(
-  #        {:ev_abs, :abs_pressure, pressure},
-  #        %{
-  #          fingers: fingers,
-  #          slot: slot
-  #        } = state
-  #      ) do
-  #   fingers = put_in(fingers, [slot, :pressure], pressure)
-  #   %{state | fingers: fingers}
-  # end
+  defp ev_abs(
+         {:ev_abs, :abs_pressure, pressure},
+         %{
+           fingers: fingers,
+           slot: slot
+         } = state
+       ) do
+    # fingers = Map.update(fingers, slot, %{id: 0}, fn map -> Map.put(map, :pressure, pressure) end)
+    fingers = put_in(fingers, [slot, :pressure], pressure)
 
-  # Touch began
+    %{state | fingers: fingers}
+  end
+
   defp ev_abs(
          {:ev_key, :btn_touch, 1},
          %{
-           slot: _slot
+           slot: slot
          } = state
        ) do
-    %{state | touch: true}
+    fingers = Map.put(state.fingers, slot, %{id: slot})
+    %{state | touch: true, fingers: fingers}
   end
 
-  # Touch ended
   defp ev_abs(
          {:ev_key, :btn_touch, 0},
          %{
            slot: slot
          } = state
        ) do
-    state
-    |> Map.put(:fingers, Map.delete(state.fingers, slot))
-    |> Map.put(:touch, false)
+    fingers = Map.delete(state.fingers, slot)
+    %{state | touch: false, fingers: fingers}
   end
 
   # if other ev types need to be handled, add them here
 
-  defp ev_abs(msg, state) do
-    # Logger.info("unhandled: #{inspect(msg)}")
-    # IO.puts "EV unhandled: #{inspect(msg)}"
-    state
-  end
+  defp ev_abs(_msg, state), do: state
 
   # ============================================================================
   # translate raw events into simulated mouse state
@@ -444,49 +407,56 @@ defmodule Scenic.Driver.Nerves.WaveshareTouch do
   defp simulate_mouse(state, ev)
 
   defp simulate_mouse(
-         %{slot: slot} = state,
+         %{slot: 0} = state,
          {:ev_key, :btn_touch, 0}
        ) do
     %{state | mouse_event: :mouse_up}
   end
 
   defp simulate_mouse(
-         %{slot: slot} = state,
+         %{slot: 0} = state,
          {:ev_key, :btn_touch, 1}
        ) do
     %{state | mouse_event: :mouse_down}
   end
 
   defp simulate_mouse(
-         %{slot: slot, mouse_event: nil} = state,
+         %{slot: 0, mouse_event: nil} = state,
          {:ev_abs, :abs_x, x}
        ) do
     %{state | mouse_event: :mouse_move, mouse_x: x}
   end
 
   defp simulate_mouse(
-         %{slot: slot} = state,
+         %{slot: 0} = state,
          {:ev_abs, :abs_x, x}
        ) do
     %{state | mouse_x: x}
   end
 
   defp simulate_mouse(
-         %{slot: slot, mouse_event: nil} = state,
+         %{slot: 0, mouse_event: nil} = state,
          {:ev_abs, :abs_y, y}
        ) do
     %{state | mouse_event: :mouse_move, mouse_y: y}
   end
 
   defp simulate_mouse(
-         %{slot: slot} = state,
+         %{slot: 0} = state,
          {:ev_abs, :abs_y, y}
        ) do
     %{state | mouse_y: y}
   end
 
+  defp simulate_mouse(state, {:ev_abs, event, _value}) when event in [:abs_pressure] do
+    state
+  end
+
   # ignore everything else
-  defp simulate_mouse(state, _), do: state
+  defp simulate_mouse(state, input) do
+    # Logger.debug("Inhandled sim mouse input: #{inspect(input)} for state: #{inspect(state)}")
+    state
+  end
 
   # ============================================================================
   # send simulated mouse events after handling a batch of raw events
