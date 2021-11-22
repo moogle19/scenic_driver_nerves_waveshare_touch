@@ -2,7 +2,7 @@ defmodule ScenicDriverNervesTouch.MixProject do
   use Mix.Project
 
   @app_name :scenic_driver_nerves_waveshare_touch
-  @version "0.1.0"
+  @version "0.2.0"
   @github "https://github.com/moogle19/scenic_driver_nerves_waveshare_touch"
 
   def project do
